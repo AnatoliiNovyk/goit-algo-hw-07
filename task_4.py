@@ -1,60 +1,71 @@
-class Comment:
-    def __init__(self, text, author):
-        self.text = text
-        self.author = author
-        self.replies = []
-        self.is_deleted = False
+from typing import List, Type
 
-    def add_reply(self, reply):
-        """Додає нову відповідь до коментаря."""
-        # Перевірка, що відповідь є екземпляром класу Comment
-        if isinstance(reply, Comment):
-            self.replies.append(reply)
-        else:
-            print("Помилка: відповідь має бути об'єктом класу Comment.")
+class Comment:
+    """
+    Клас для представлення ієрархічної структури коментарів.
+    Включає покращену обробку помилок та анотації типів.
+    """
+    def __init__(self, text: str, author: str):
+        self.text: str = text
+        self.author: str = author
+        self.replies: List['Comment'] = []
+        self.is_deleted: bool = False
+
+    def add_reply(self, reply: 'Comment'):
+        """
+        Додає нову відповідь до коментаря.
+        Викликає TypeError, якщо відповідь не є екземпляром класу Comment.
+        """
+        if not isinstance(reply, Comment):
+            # Замість друку помилки генеруємо виняток
+            raise TypeError("Відповідь має бути екземпляром класу Comment.")
+        self.replies.append(reply)
 
     def remove_reply(self):
         """
-        "Видаляє" коментар, змінюючи його текст та встановлюючи прапорець.
-        Фактично, коментар залишається в структурі, щоб зберегти відповіді на нього.
+        "М'яке видалення" коментаря: змінює текст та встановлює прапорець.
+        Структура нащадків зберігається.
         """
         self.text = "Цей коментар було видалено."
+        self.author = "" # Приховуємо автора
         self.is_deleted = True
-        self.author = "" # Опціонально, можна приховати автора
 
-    def display(self, level=0):
-        """Рекурсивно виводить коментар та всі його відповіді."""
+    def display(self, level: int = 0):
+        """
+        Рекурсивно виводить коментар та всі його відповіді з відступами.
+        """
         prefix = "    " * level
         if self.is_deleted:
             print(f"{prefix}{self.text}")
         else:
             print(f"{prefix}{self.author}: {self.text}")
         
-        for reply in self.replies:
-            reply.display(level + 1)
+        for r in self.replies:
+            r.display(level + 1)
 
 # Створення коментарів
 root_comment = Comment("Яка чудова книга!", "Бодя")
 reply1 = Comment("Книга повне розчарування :(", "Андрій")
 reply2 = Comment("Що в ній чудового?", "Марина")
 
-# Додавання відповідей до головного коментаря
+# Додавання відповідей
 root_comment.add_reply(reply1)
 root_comment.add_reply(reply2)
 
-# Створення відповіді на відповідь
+# Вкладена відповідь
 reply1_1 = Comment("Не книжка, а перевели купу паперу ні нащо...", "Сергій")
 reply1.add_reply(reply1_1)
-
-# Створення ще одного рівня вкладеності
-reply2_1 = Comment("Теж не зрозуміла захоплення.", "Олена")
-reply2.add_reply(reply2_1)
-
-print("--- Початкова структура коментарів ---")
-root_comment.display()
 
 # "Видалення" коментаря Андрія
 reply1.remove_reply()
 
-print("\n--- Структура після видалення коментаря ---")
+print("--- Структура коментарів після оновлення коду ---")
 root_comment.display()
+
+# Тестування обробки помилок
+print("\n--- Тестування обробки помилок ---")
+try:
+    # Спроба додати відповідь неправильного типу
+    root_comment.add_reply("Це не коментар, а просто рядок")
+except TypeError as e:
+    print(f"Успішно перехоплено помилку: {e}")
